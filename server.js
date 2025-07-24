@@ -22,6 +22,11 @@ if (fs.existsSync(DB_FILE)) {
   }
 }
 
+// ✅ Simple GET /proof — for browser test
+app.get("/proof", (req, res) => {
+  res.send("✅ TREP backend is live and accepting POSTs at /proof");
+});
+
 // ✅ POST /proof — verify burn & log submission
 app.post("/proof", async (req, res) => {
   try {
