@@ -20,13 +20,13 @@ async function verifyBurn(txId, minUsd = 1.0) {
 
     const txJson = await txRes.json();
 
-if (!Array.isArray(txJson) || txJson.length === 0) {
-  console.error("❌ Helius returned empty or invalid response:", JSON.stringify(txJson));
-  throw new Error("Transaction not found or missing in Helius response");
-}
+    if (!Array.isArray(txJson) || txJson.length === 0) {
+      console.error("❌ Helius returned empty or invalid response:", JSON.stringify(txJson));
+      throw new Error("Transaction not found or missing in Helius response");
+    }
 
-const tx = txJson[0];
-
+    const tx = txJson[0];
+    
     const transfers = tx.tokenTransfers || [];
     const burnTransfer = transfers.find(
       (t) =>
