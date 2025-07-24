@@ -1,13 +1,15 @@
+// verifyBurn.js
+
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Updated burn address
+const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Burn address
 
 async function verifyBurn(txId, minUsd = 1.0) {
   try {
-    // ✅ 1. Fetch transaction details from Helius (corrected URL)
-    const heliusUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
+    // ✅ 1. Fetch transaction details from Helius
+    const heliusUrl = `https://mainnet.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(heliusUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -37,7 +39,7 @@ async function verifyBurn(txId, minUsd = 1.0) {
 
     const amount = parseFloat(burnTransfer.amount);
 
-    // ✅ 3. Fetch TREP price in USD
+    // ✅ 3. Fetch live TREP price from GeckoTerminal
     const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
     const priceRes = await fetch(priceUrl);
     if (!priceRes.ok) {
@@ -53,9 +55,9 @@ async function verifyBurn(txId, minUsd = 1.0) {
       throw new Error("TREP price unavailable or invalid");
     }
 
+    // ✅ 4. Calculate USD value and compare with minimum
     const usdValue = amount * trepUsd;
 
-    // ✅ 4. Determine if burn meets value threshold
     if (usdValue >= minUsd) {
       return {
         success: true,
@@ -65,9 +67,7 @@ async function verifyBurn(txId, minUsd = 1.0) {
     } else {
       return {
         success: false,
-        reason: `Burned TREP value is $${usdValue.toFixed(
-          2
-        )}, which is below the $${minUsd} minimum.`,
+        reason: `Burned TREP value is $${usdValue.toFixed(2)}, below the $${minUsd} minimum.`,
       };
     }
   } catch (err) {
@@ -76,5 +76,5 @@ async function verifyBurn(txId, minUsd = 1.0) {
   }
 }
 
-// ✅ Export it under a clean name
+// ✅ Exported function
 module.exports = { verifyBurn };
