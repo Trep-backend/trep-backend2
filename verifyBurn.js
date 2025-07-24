@@ -1,14 +1,12 @@
-// verifyBurn.js
-
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Burn address
+const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Correct burn address
 
 async function verifyBurn(txId, minUsd = 1.0) {
   try {
-    // ✅ 1. Fetch transaction details from Helius
+    // ✅ 1. Corrected Helius endpoint
     const heliusUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(heliusUrl, {
       method: "POST",
@@ -24,7 +22,6 @@ async function verifyBurn(txId, minUsd = 1.0) {
     const tx = txJson?.[0];
     if (!tx) throw new Error("Transaction not found or missing");
 
-    // ✅ 2. Parse token transfers and find burn to burn address
     const transfers = tx.tokenTransfers || [];
     const burnTransfer = transfers.find(
       (t) =>
@@ -39,9 +36,10 @@ async function verifyBurn(txId, minUsd = 1.0) {
 
     const amount = parseFloat(burnTransfer.amount);
 
-    // ✅ 3. Fetch live TREP price from GeckoTerminal
+    // ✅ 2. Live TREP price from GeckoTerminal
     const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
     const priceRes = await fetch(priceUrl);
+
     if (!priceRes.ok) {
       throw new Error(`Failed to fetch price: ${priceRes.status}`);
     }
@@ -55,7 +53,6 @@ async function verifyBurn(txId, minUsd = 1.0) {
       throw new Error("TREP price unavailable or invalid");
     }
 
-    // ✅ 4. Calculate USD value and compare with minimum
     const usdValue = amount * trepUsd;
 
     if (usdValue >= minUsd) {
@@ -67,7 +64,9 @@ async function verifyBurn(txId, minUsd = 1.0) {
     } else {
       return {
         success: false,
-        reason: `Burned TREP value is $${usdValue.toFixed(2)}, below the $${minUsd} minimum.`,
+        reason: `Burned TREP value is $${usdValue.toFixed(
+          2
+        )}, which is below the $${minUsd} minimum.`,
       };
     }
   } catch (err) {
@@ -76,5 +75,4 @@ async function verifyBurn(txId, minUsd = 1.0) {
   }
 }
 
-// ✅ Exported function
 module.exports = { verifyBurn };
