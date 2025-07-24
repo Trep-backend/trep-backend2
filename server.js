@@ -17,11 +17,15 @@ if (fs.existsSync(DB_FILE)) {
 }
 
 app.post("/proof", async (req, res) => {
-  const { addressOrTx, telegramId } = req.body;
-
-  if (!addressOrTx || !telegramId) {
-    return res.status(400).json({ error: "Missing required fields." });
+  try {
+    const { addressOrTx, telegramId } = req.body;
+    const result = await verifyBurnProof(addressOrTx, telegramId);
+    res.json(result);
+  } catch (error) {
+    console.error("Error in /proof:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
+});
 
   // ✅ Verify burn on-chain
   const result = await verifyTrepBurn(addressOrTx);
