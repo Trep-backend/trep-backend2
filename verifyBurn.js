@@ -6,8 +6,8 @@ const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Upda
 
 async function verifyBurn(txId, minUsd = 1.0) {
   try {
-    // ✅ 1. Fetch transaction details from Helius
-    const heliusUrl = `https://mainnet.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
+    // ✅ 1. Fetch transaction details from Helius (corrected URL)
+    const heliusUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(heliusUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
