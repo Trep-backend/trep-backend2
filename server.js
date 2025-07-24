@@ -19,10 +19,16 @@ if (fs.existsSync(DB_FILE)) {
 app.post("/proof", async (req, res) => {
   try {
     const { addressOrTx, telegramId } = req.body;
+
+    console.log("Incoming /proof request", { addressOrTx, telegramId });
+
     const result = await verifyBurnProof(addressOrTx, telegramId);
+
+    console.log("Verification result:", result);
+
     res.json(result);
   } catch (error) {
-    console.error("Error in /proof:", error);
+    console.error("Error in /proof handler:", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 });
