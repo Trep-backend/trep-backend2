@@ -19,7 +19,7 @@ router.post("/proof", async (req, res) => {
     // Log the API key to confirm it's loading
     console.log("🔍 Using HELIUS_API_KEY:", HELIUS_API_KEY);
 
-    const txUrl = `https://mainnet.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
+    const txUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(txUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
