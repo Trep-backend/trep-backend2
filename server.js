@@ -13,9 +13,6 @@ app.use(proofRouter);
 const PORT = process.env.PORT || 5000;
 const DB_FILE = "./submissions.json";
 
-app.use(cors());
-app.use(express.json());
-
 // Load existing submissions from file
 let submissions = [];
 if (fs.existsSync(DB_FILE)) {
