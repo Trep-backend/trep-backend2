@@ -1,87 +1,78 @@
-const express = require("express");
-const fs = require("fs");
-const cors = require("cors");
-require("dotenv").config();
-const { verifyTransfer } = require("./verifyBurn"); // ✅ Renamed import
-const proofRouter = require("./proof");
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(proofRouter);
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
+const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5"; // ✅ Updated vault
 
-const PORT = process.env.PORT || 5000;
-const DB_FILE = "./submissions.json";
-
-// Load existing submissions from file
-let submissions = [];
-if (fs.existsSync(DB_FILE)) {
+async function verifyTransfer(txId, minUsd = 1.0) {
   try {
-    submissions = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
+    const heliusUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
+    const txRes = await fetch(heliusUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactions: [txId] }),
+    });
+
+    if (!txRes.ok) {
+      throw new Error(`Helius error: ${txRes.status} ${txRes.statusText}`);
+    }
+
+    const txJson = await txRes.json();
+
+    if (!Array.isArray(txJson) || txJson.length === 0) {
+      throw new Error("Transaction not found or missing in Helius response");
+    }
+
+    const tx = txJson[0];
+    const transfers = tx.tokenTransfers || [];
+
+    const validTransfer = transfers.find(
+      (t) =>
+        t.mint === TREP_MINT &&
+        t.toUserAccount === VAULT_ADDRESS &&
+        parseFloat(t.amount) > 0
+    );
+
+    if (!validTransfer) {
+      return { success: false, reason: "No valid TREP transfer to vault found in transaction." };
+    }
+
+    const amount = parseFloat(validTransfer.amount);
+
+    const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
+    const priceRes = await fetch(priceUrl);
+
+    if (!priceRes.ok) {
+      throw new Error(`Failed to fetch price: ${priceRes.status}`);
+    }
+
+    const priceJson = await priceRes.json();
+    const trepUsd = parseFloat(priceJson?.data?.attributes?.token_prices?.[TREP_MINT]);
+
+    if (!trepUsd || isNaN(trepUsd)) {
+      throw new Error("TREP price unavailable or invalid");
+    }
+
+    const usdValue = amount * trepUsd;
+
+    if (usdValue >= minUsd) {
+      return {
+        success: true,
+        amount,
+        usd: parseFloat(usdValue.toFixed(4)),
+      };
+    } else {
+      return {
+        success: false,
+        reason: `Transferred TREP value is $${usdValue.toFixed(
+          2
+        )}, which is below the $${minUsd} minimum.`,
+      };
+    }
   } catch (err) {
-    console.error("❌ Failed to load submissions.json:", err.message);
-    submissions = [];
+    console.error("❌ Transfer verification failed:", err.message);
+    return { success: false, reason: err.message };
   }
 }
 
-// ✅ Simple GET /proof — for browser test
-app.get("/proof", (req, res) => {
-  res.send("✅ TREP backend is live and accepting POSTs at /proof");
-});
-
-// ✅ POST /proof — verify transfer & log submission
-app.post("/proof", async (req, res) => {
-  try {
-    const { addressOrTx, telegramId } = req.body;
-    if (!addressOrTx || !telegramId) {
-      return res.status(400).json({ success: false, reason: "Missing addressOrTx or telegramId" });
-    }
-
-    console.log("📩 Incoming /proof request:", { addressOrTx, telegramId });
-
-    // ✅ Verify TREP transfer to vault
-    const result = await verifyTransfer(addressOrTx);
-
-    if (!result.success) {
-      console.warn("❌ Transfer verification failed:", result.reason);
-      return res.json({ success: false, reason: result.reason });
-    }
-
-    // ✅ Save verified submission
-    const entry = {
-      id: Date.now(),
-      addressOrTx,
-      telegramId,
-      verified: true,
-      usdValue: result.usd,
-      trepAmount: result.amount,
-      submittedAt: new Date().toISOString(),
-    };
-
-    submissions.push(entry);
-    fs.writeFileSync(DB_FILE, JSON.stringify(submissions, null, 2));
-
-    console.log("✅ Verified and saved entry:", entry);
-
-    res.json({
-      success: true,
-      message: "✅ Transfer verified!",
-      usd: result.usd,
-      trep: result.amount,
-      entry,
-    });
-  } catch (error) {
-    console.error("❌ Internal server error in /proof:", error);
-    res.status(500).json({ success: false, error: "Internal Server Error", details: error.message });
-  }
-});
-
-// ✅ GET /submissions — list all verified submissions
-app.get("/submissions", (req, res) => {
-  res.json(submissions);
-});
-
-// ✅ Start server
-app.listen(PORT, () => {
-  console.log(`🔥 TREP backend running on http://localhost:${PORT}`);
-});
+module.exports = { verifyTransfer };
