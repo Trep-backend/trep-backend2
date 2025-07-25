@@ -27,11 +27,11 @@ async function verifyTransfer(txId, minUsd = 1.0) {
     const transfers = tx.tokenTransfers || [];
 
     const validTransfer = transfers.find(
-      (t) =>
-        t.mint === TREP_MINT &&
-        t.toTokenAccount === VAULT_ADDRESS || t.toUserAccount === VAULT_ADDRESS
-        parseFloat(t.amount) > 0
-    );
+  (t) =>
+    t.mint === TREP_MINT &&
+    (t.toUserAccount === VAULT_ADDRESS || t.toTokenAccount === VAULT_ADDRESS) &&
+    parseFloat(t.amount) > 0
+);
 
     if (!validTransfer) {
       return { success: false, reason: "No valid TREP transfer to vault found in transaction." };
