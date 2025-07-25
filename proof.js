@@ -1,6 +1,6 @@
 // proof.js (CommonJS version)
 const express = require("express");
-const fetch = require("node-fetch");
+const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
 
 const router = express.Router();
 const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5";
