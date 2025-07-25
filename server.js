@@ -3,7 +3,6 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 require("dotenv").config();
-const { verifyTransfer } = require("./verifyBurn"); // ✅ Renamed import
 const proofRouter = require("./proof");
 
 const app = express();
