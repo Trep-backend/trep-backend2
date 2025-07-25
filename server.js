@@ -2,7 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 require("dotenv").config();
-const { verifyBurn } = require("./verifyBurn");
+const { verifyTransfer } = require("./verifyBurn"); // ✅ Renamed import
 const proofRouter = require("./proof");
 
 const app = express();
@@ -29,7 +29,7 @@ app.get("/proof", (req, res) => {
   res.send("✅ TREP backend is live and accepting POSTs at /proof");
 });
 
-// ✅ POST /proof — verify burn & log submission
+// ✅ POST /proof — verify transfer & log submission
 app.post("/proof", async (req, res) => {
   try {
     const { addressOrTx, telegramId } = req.body;
@@ -39,11 +39,11 @@ app.post("/proof", async (req, res) => {
 
     console.log("📩 Incoming /proof request:", { addressOrTx, telegramId });
 
-    // ✅ Verify burn on-chain
-    const result = await verifyBurn(addressOrTx);
+    // ✅ Verify TREP transfer to vault
+    const result = await verifyTransfer(addressOrTx);
 
     if (!result.success) {
-      console.warn("❌ Burn verification failed:", result.reason);
+      console.warn("❌ Transfer verification failed:", result.reason);
       return res.json({ success: false, reason: result.reason });
     }
 
@@ -65,7 +65,7 @@ app.post("/proof", async (req, res) => {
 
     res.json({
       success: true,
-      message: "✅ Burn verified!",
+      message: "✅ Transfer verified!",
       usd: result.usd,
       trep: result.amount,
       entry,
