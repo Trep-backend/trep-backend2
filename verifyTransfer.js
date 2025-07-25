@@ -25,8 +25,7 @@ async function verifyTransfer(txId, minUsd = 1.0) {
 
     const tx = txJson[0];
 const transfers = tx.tokenTransfers || [];
-
-console.log("🔍 Token transfers:", transfers); // <-- ADD THIS
+    console.log("🔍 Token transfers:", transfers);
 
     const validTransfer = transfers.find(
   (t) =>
