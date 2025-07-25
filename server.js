@@ -1,3 +1,4 @@
+import proofRouter from "./proof.js";
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
