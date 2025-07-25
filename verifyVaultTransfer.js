@@ -29,7 +29,7 @@ async function verifyTransfer(txId, minUsd = 1.0) {
     const validTransfer = transfers.find(
       (t) =>
         t.mint === TREP_MINT &&
-        t.toUserAccount === VAULT_ADDRESS &&
+        t.toTokenAccount === VAULT_ADDRESS || t.toUserAccount === VAULT_ADDRESS
         parseFloat(t.amount) > 0
     );
 
