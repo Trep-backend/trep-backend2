@@ -1,4 +1,4 @@
-const { verifyTransfer } = require("./verifyBurn");
+const { verifyTransfer } = require("./verifyTransfer");
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
