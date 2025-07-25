@@ -2,7 +2,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5"; // ✅ Your vault wallet
+const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5"; // ✅ Updated vault
 
 async function verifyTransfer(txId, minUsd = 1.0) {
   try {
@@ -26,20 +26,19 @@ async function verifyTransfer(txId, minUsd = 1.0) {
     const tx = txJson[0];
     const transfers = tx.tokenTransfers || [];
 
-    const vaultTransfer = transfers.find(
+    const validTransfer = transfers.find(
       (t) =>
         t.mint === TREP_MINT &&
         t.toUserAccount === VAULT_ADDRESS &&
         parseFloat(t.amount) > 0
     );
 
-    if (!vaultTransfer) {
+    if (!validTransfer) {
       return { success: false, reason: "No valid TREP transfer to vault found in transaction." };
     }
 
-    const amount = parseFloat(vaultTransfer.amount);
+    const amount = parseFloat(validTransfer.amount);
 
-    // ✅ Live TREP price
     const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
     const priceRes = await fetch(priceUrl);
 
@@ -48,9 +47,7 @@ async function verifyTransfer(txId, minUsd = 1.0) {
     }
 
     const priceJson = await priceRes.json();
-    const trepUsd = parseFloat(
-      priceJson?.data?.attributes?.token_prices?.[TREP_MINT]
-    );
+    const trepUsd = parseFloat(priceJson?.data?.attributes?.token_prices?.[TREP_MINT]);
 
     if (!trepUsd || isNaN(trepUsd)) {
       throw new Error("TREP price unavailable or invalid");
