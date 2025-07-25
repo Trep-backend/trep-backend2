@@ -1,11 +1,15 @@
-import proofRouter from "./proof.js";
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 require("dotenv").config();
 const { verifyBurn } = require("./verifyBurn");
+const proofRouter = require("./proof");
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(proofRouter);
+
 const PORT = process.env.PORT || 5000;
 const DB_FILE = "./submissions.json";
 
