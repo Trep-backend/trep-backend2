@@ -1,11 +1,11 @@
-// proof.js (Revised Backend Endpoint for TREP Payment Verification)
-import express from "express";
-import fetch from "node-fetch";
+// proof.js (CommonJS version)
+const express = require("express");
+const fetch = require("node-fetch");
 
 const router = express.Router();
 const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5";
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const MIN_AMOUNT = 1.0; // Minimum $TREP value to verify
+const MIN_AMOUNT = 1.0;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 
 router.post("/proof", async (req, res) => {
@@ -16,7 +16,6 @@ router.post("/proof", async (req, res) => {
   }
 
   try {
-    // Fetch transaction info from Helius
     const txUrl = `https://mainnet.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(txUrl, {
       method: "POST",
@@ -43,7 +42,6 @@ router.post("/proof", async (req, res) => {
       return res.status(400).json({ success: false, error: "No valid TREP transfer found" });
     }
 
-    // Save or log verification (optional)
     console.log("✅ Verified payment from:", validTransfer.source, "Telegram ID:", telegramId);
 
     return res.json({ success: true });
@@ -53,4 +51,4 @@ router.post("/proof", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
