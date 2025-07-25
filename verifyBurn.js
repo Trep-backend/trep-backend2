@@ -2,11 +2,10 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const BURN_ADDRESS = "8LnWsg2pycEZHgvRFF91YrVVv3LDpuxU1i7ECATD9bxF"; // ✅ Correct burn address
+const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5"; // ✅ Updated
 
-async function verifyBurn(txId, minUsd = 1.0) {
+async function verifyTransfer(txId, minUsd = 1.0) {
   try {
-    // ✅ 1. Corrected Helius endpoint
     const heliusUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
     const txRes = await fetch(heliusUrl, {
       method: "POST",
@@ -21,27 +20,26 @@ async function verifyBurn(txId, minUsd = 1.0) {
     const txJson = await txRes.json();
 
     if (!Array.isArray(txJson) || txJson.length === 0) {
-      console.error("❌ Helius returned empty or invalid response:", JSON.stringify(txJson));
       throw new Error("Transaction not found or missing in Helius response");
     }
 
     const tx = txJson[0];
-    
     const transfers = tx.tokenTransfers || [];
-    const burnTransfer = transfers.find(
+
+    const validTransfer = transfers.find(
       (t) =>
         t.mint === TREP_MINT &&
-        t.toUserAccount === BURN_ADDRESS &&
+        t.toUserAccount === VAULT_ADDRESS &&
         parseFloat(t.amount) > 0
     );
 
-    if (!burnTransfer) {
-      return { success: false, reason: "No valid TREP burn found in transaction." };
+    if (!validTransfer) {
+      return { success: false, reason: "No valid TREP transfer to vault found in transaction." };
     }
 
-    const amount = parseFloat(burnTransfer.amount);
+    const amount = parseFloat(validTransfer.amount);
 
-    // ✅ 2. Live TREP price from GeckoTerminal
+    // ✅ Live TREP price
     const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
     const priceRes = await fetch(priceUrl);
 
@@ -69,15 +67,15 @@ async function verifyBurn(txId, minUsd = 1.0) {
     } else {
       return {
         success: false,
-        reason: `Burned TREP value is $${usdValue.toFixed(
+        reason: `Transferred TREP value is $${usdValue.toFixed(
           2
         )}, which is below the $${minUsd} minimum.`,
       };
     }
   } catch (err) {
-    console.error("❌ Burn verification failed:", err.message);
+    console.error("❌ Transfer verification failed:", err.message);
     return { success: false, reason: err.message };
   }
 }
 
-module.exports = { verifyBurn };
+module.exports = { verifyBurn: verifyTransfer };
