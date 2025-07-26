@@ -1,9 +1,9 @@
-
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const TREP_MINT = "Cf7r9JE9HcHSe1EN3hm6kEjGCyQuV3p6CjuwRx919Tka";
-const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5"; // ✅ Updated vault
+const VAULT_ADDRESS = "7j5a96YFJ2DSCHvE7LFB9CZKtr42gpiSiMLQavd3CBB5";
+const VAULT_TOKEN_ACCOUNT = "2zywod1RMteXy6JrD3QvdeanWSCnRhM1CiDLCUqgtX6x"; // ✅ New line
 
 async function verifyTransfer(txId, minUsd = 1.0) {
   try {
@@ -24,23 +24,23 @@ async function verifyTransfer(txId, minUsd = 1.0) {
       throw new Error("Transaction not found or missing in Helius response");
     }
 
-console.log("📦 Full TX from Helius:", JSON.stringify(txJson[0], null, 2));
+    console.log("📦 Full TX from Helius:", JSON.stringify(txJson[0], null, 2));
     const tx = txJson[0];
-const transfers = tx.tokenTransfers || [];
-    console.log("🔍 Token Transfers:", JSON.stringify(transfers, null, 2)); 
+    const transfers = tx.tokenTransfers || [];
+    console.log("🔍 Token Transfers:", JSON.stringify(transfers, null, 2));
 
     const validTransfer = transfers.find(
-  (t) =>
-    t.mint === TREP_MINT &&
-  (t.toUserAccount === VAULT_ADDRESS || t.tokenAccountOwner === VAULT_ADDRESS) &&
-  parseFloat(t.amount) > 0
-);
+      (t) =>
+        t.mint === TREP_MINT &&
+        (t.toUserAccount === VAULT_ADDRESS || t.toTokenAccount === VAULT_TOKEN_ACCOUNT) &&
+        parseFloat(t.tokenAmount) > 0
+    );
 
     if (!validTransfer) {
       return { success: false, reason: "No valid TREP transfer to vault found in transaction." };
     }
 
-    const amount = parseFloat(validTransfer.amount);
+    const amount = parseFloat(validTransfer.tokenAmount);
 
     const priceUrl = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${TREP_MINT}`;
     const priceRes = await fetch(priceUrl);
@@ -67,9 +67,7 @@ const transfers = tx.tokenTransfers || [];
     } else {
       return {
         success: false,
-        reason: `Transferred TREP value is $${usdValue.toFixed(
-          2
-        )}, which is below the $${minUsd} minimum.`,
+        reason: `Transferred TREP value is $${usdValue.toFixed(2)}, which is below the $${minUsd} minimum.`,
       };
     }
   } catch (err) {
