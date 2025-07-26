@@ -1,3 +1,4 @@
+
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
@@ -31,8 +32,8 @@ const transfers = tx.tokenTransfers || [];
     const validTransfer = transfers.find(
   (t) =>
     t.mint === TREP_MINT &&
-    (t.toUserAccount === VAULT_ADDRESS || t.toTokenAccount === VAULT_ADDRESS) &&
-    parseFloat(t.amount) > 0
+  (t.toUserAccount === VAULT_ADDRESS || t.tokenAccountOwner === VAULT_ADDRESS) &&
+  parseFloat(t.amount) > 0
 );
 
     if (!validTransfer) {
