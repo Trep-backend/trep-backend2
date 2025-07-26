@@ -1,13 +1,13 @@
 {
   "name": "trep-backend",
   "version": "1.0.0",
-  "description": "TREP burn verification backend",
+  "description": "TREP vault transfer verification backend",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": ["solana", "trep", "backend", "burn", "helius", "express"],
+  "keywords": ["solana", "trep", "backend", "vault", "helius", "express"],
   "author": "",
   "license": "MIT",
   "dependencies": {
