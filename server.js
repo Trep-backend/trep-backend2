@@ -15,14 +15,14 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.post("/proof", async (req, res) => {
-  const { addressOrTx, telegramId } = req.body;
+  const { txId, telegramId } = req.body;
 
-  if (!addressOrTx || !telegramId) {
+  if (!txId || !telegramId) {
     return res.status(400).json({ success: false, error: "Missing fields" });
   }
 
   try {
-    const result = await verifyTransfer(addressOrTx);
+    const result = await verifyTransfer(txId);
     if (result.success) {
       // Optionally log success
     }
