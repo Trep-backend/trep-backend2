@@ -1,87 +1,38 @@
-const { verifyTransfer } = require("./verifyTransfer");
 const express = require("express");
-const fs = require("fs");
 const cors = require("cors");
+const bodyParser = require("body-parser");
+
+const { verifyTransfer } = require("./verifyTransfer");
+const fs = require("fs");
+const path = require("path");
+
 require("dotenv").config();
-const proofRouter = require("./proof");
 
 const app = express();
+const PORT = process.env.PORT || 3000; // ✅ This line fixes the Render port issue
+
 app.use(cors());
-app.use(express.json());
-app.use(proofRouter);
+app.use(bodyParser.json());
 
-const PORT = process.env.PORT || 5000;
-const DB_FILE = "./submissions.json";
-
-// Load existing submissions from file
-let submissions = [];
-if (fs.existsSync(DB_FILE)) {
-  try {
-    submissions = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
-  } catch (err) {
-    console.error("❌ Failed to load submissions.json:", err.message);
-    submissions = [];
-  }
-}
-
-// ✅ Simple GET /proof — for browser test
-app.get("/proof", (req, res) => {
-  res.send("✅ TREP backend is live and accepting POSTs at /proof");
-});
-
-// ✅ POST /proof — verify transfer & log submission
 app.post("/proof", async (req, res) => {
+  const { addressOrTx, telegramId } = req.body;
+
+  if (!addressOrTx || !telegramId) {
+    return res.status(400).json({ success: false, error: "Missing fields" });
+  }
+
   try {
-    const { addressOrTx, telegramId } = req.body;
-    if (!addressOrTx || !telegramId) {
-      return res.status(400).json({ success: false, reason: "Missing addressOrTx or telegramId" });
-    }
-
-    console.log("📩 Incoming /proof request:", { addressOrTx, telegramId });
-
-    // ✅ Verify TREP transfer to vault
     const result = await verifyTransfer(addressOrTx);
-
-    if (!result.success) {
-      console.warn("❌ Transfer verification failed:", result.reason);
-      return res.json({ success: false, reason: result.reason });
+    if (result.success) {
+      // Optionally log success
     }
-
-    // ✅ Save verified submission
-    const entry = {
-      id: Date.now(),
-      addressOrTx,
-      telegramId,
-      verified: true,
-      usdValue: result.usd,
-      trepAmount: result.amount,
-      submittedAt: new Date().toISOString(),
-    };
-
-    submissions.push(entry);
-    fs.writeFileSync(DB_FILE, JSON.stringify(submissions, null, 2));
-
-    console.log("✅ Verified and saved entry:", entry);
-
-    res.json({
-      success: true,
-      message: "✅ Transfer verified!",
-      usd: result.usd,
-      trep: result.amount,
-      entry,
-    });
-  } catch (error) {
-    console.error("❌ Internal server error in /proof:", error);
-    res.status(500).json({ success: false, error: "Internal Server Error", details: error.message });
+    res.json(result);
+  } catch (err) {
+    console.error("❌ Error in /proof:", err);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
-// ✅ GET /submissions — list all verified submissions
-app.get("/submissions", (req, res) => {
-  res.json(submissions);
-});
-
-// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`🔥 TREP backend running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
