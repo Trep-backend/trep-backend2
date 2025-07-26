@@ -9,9 +9,9 @@ const MIN_AMOUNT = 1.0;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 
 router.post("/proof", async (req, res) => {
-  const { addressOrTx, telegramId } = req.body;
+  const { txId, telegramId } = req.body;
 
-  if (!addressOrTx) {
+  if (!txId) {
     return res.status(400).json({ success: false, error: "Missing transaction ID" });
   }
 
@@ -19,12 +19,13 @@ router.post("/proof", async (req, res) => {
     // Log the API key to confirm it's loading
     console.log("🔍 Using HELIUS_API_KEY:", HELIUS_API_KEY);
 
-    const txUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
-    const txRes = await fetch(txUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transactions: [addressOrTx] })
-    });
+   const txUrl = `https://api.helius.xyz/v0/transactions/?api-key=${HELIUS_API_KEY}`;
+const txRes = await fetch(txUrl, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ transactions: [txId] })
+});
+
 
     const txData = await txRes.json();
     const parsedTx = txData[0];
