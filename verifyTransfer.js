@@ -78,6 +78,3 @@ const transfers = tx.tokenTransfers || [];
 }
 
 module.exports = { verifyTransfer };
-
-
-
