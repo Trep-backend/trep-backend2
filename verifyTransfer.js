@@ -23,6 +23,7 @@ async function verifyTransfer(txId, minUsd = 1.0) {
       throw new Error("Transaction not found or missing in Helius response");
     }
 
+console.log("📦 Full TX from Helius:", JSON.stringify(txJson[0], null, 2));
     const tx = txJson[0];
 const transfers = tx.tokenTransfers || [];
     console.log("🔍 Token Transfers:", JSON.stringify(transfers, null, 2)); 
@@ -77,3 +78,6 @@ const transfers = tx.tokenTransfers || [];
 }
 
 module.exports = { verifyTransfer };
+
+
+
